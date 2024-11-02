@@ -1,0 +1,714 @@
+---
+title: "Untitled"
+output: html_document
+date: "2024-05-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r,eval=FALSE}
+rm(list=ls())
+library(scLink)
+#source(".R")
+
+cal_loglik <- function(theta,S,n,mutipiler=1e250){
+  l <- length(theta)
+  loglik<-0
+  for (k in 1:l){
+    loglik <- loglik +n[k]/2 * ( as.numeric(determinant(theta[[k]],logarithm = TRUE)$modulus) - sum(diag(S[[k]] %*% theta[[k]])) )
+  }
+  return(loglik)
+}
+
+cal_BIC <- function(theta, loglik, n, threshold){
+  l <- length(theta)
+  pn <- 0
+  for (k in 1:l){
+    pn <- pn + log(n[k])*sum(abs(theta[[k]][upper.tri(theta[[k]],diag = F)]) > threshold) # this calculates # edges and not number of non-zero elements in theta (see text); but, should be trivial
+  }
+  bic <- pn - 2*loglik
+  return(bic)
+}
+```
+
+
+```{r,eval=FALSE}
+norm <- readRDS("/storage/group/qul12/default/elle/GitHub/Network-Analysis/real_dat/tc_may12_24/tc_may12_24_norm.rds")
+n_vec <- unlist(lapply(norm, nrow))
+
+u_th <- 4995
+l_th <- 4495
+
+#    for (l2 in seq(0.01,0.15,by=0.01)){
+l2=0.01
+  load(paste0("/storage/group/qul12/default/elle/GitHub/Network-Analysis/real_dat/tc_may12_24/tc_may12_24_nets_", l2, ".Rdata"))
+
+ if (length(CFGL_out[[1]])==1&length(CFGL_r_out[[1]])==1&length(CFGL_rp_out[[1]])==1){
+pC <- CFGL_out[[1]][[1]][[1]]$theta
+
+wgt <- list(seq(0,0.3,by=0.0001), seq(0,0.3,by=0.0001), seq(0,0.3,by=0.0001))
+myw <- lapply(1:length(pC),c)
+
+for (c in 1:length(pC)){
+  for (w in wgt[[c]]){
+    temp <- pC[[c]]
+    temp[abs(temp)<=w] <- 0
+    nedge <- sum(temp[upper.tri(temp)]!=0)
+      #  print(c(c,w,nedge))
+    if(nedge<u_th & nedge>l_th){
+     #  print(paste0("condition ",c,", weight ", w, ", nedge ", nedge))
+    myw[[c]] <- c(myw[[c]],w)
+    }
+  }
+}
+
+myw <- lapply(myw, min)
+print(myw)
+
+for(c in 1:length(pC)){
+  pC[[c]][abs(pC[[c]])<myw[[c]]] <- 0
+  print(sum(pC[[c]][upper.tri(pC[[c]])]!=0))
+}
+
+l2 = 0.01
+  load(paste0("/storage/group/qul12/default/elle/GitHub/Network-Analysis/real_dat/tc_may12_24/tc_may12_24_nets_", l2, ".Rdata"))
+
+pCr <- CFGL_r_out[[1]][[1]][[1]]$theta
+
+wgtr <- list(seq(0,0.15,by=0.0001), seq(0,0.2,by=0.0001), seq(0,0.3,by=0.0001))
+mywr <- lapply(1:length(pCr),c)
+
+for (c in 1:length(pCr)){
+  for (w in wgtr[[c]]){
+    temp <- pCr[[c]]
+    temp[abs(temp)<=w] <- 0
+    nedge <- sum(temp[upper.tri(temp)]!=0)
+ #       print(c(c,w,nedge))
+    if(nedge<u_th & nedge>l_th){
+  #     print(paste0("condition ",c,", weight ", w, ", nedge ", nedge))
+    mywr[[c]] <- c(mywr[[c]],w)
+    }
+  }
+}
+
+mywr <- lapply(mywr, min)
+print(mywr)
+
+for(c in 1:length(pCr)){
+  pCr[[c]][abs(pCr[[c]])<mywr[[c]]] <- 0
+  print(sum(pCr[[c]][upper.tri(pCr[[c]])]!=0))
+}
+
+l2 = 0.01
+  load(paste0("/storage/group/qul12/default/elle/GitHub/Network-Analysis/real_dat/tc_may12_24/tc_may12_24_nets_", l2, ".Rdata"))
+
+pCrp <- CFGL_rp_out[[1]][[1]][[1]]$theta
+
+wgtrp <- list(seq(0,0.05,by=0.0001), seq(0,0.05,by=0.0001), seq(0,0.05,by=0.0001))
+mywrp <- lapply(1:length(pCrp),c)
+
+for (c in 1:length(pCrp)){
+  for (w in wgtrp[[c]]){
+    temp <- pCrp[[c]]
+    temp[abs(temp)<=w] <- 0
+    nedge <- sum(temp[upper.tri(temp)]!=0)
+    #   print(c(c,w,nedge))
+    if(nedge<u_th & nedge>l_th){
+ #      print(paste0("condition ",c,", weight ", w, ", nedge ", nedge))
+    mywrp[[c]] <- c(mywrp[[c]],w)
+    }
+  }
+}
+
+mywrp <- lapply(mywrp, min)
+print(mywrp)
+
+for(c in 1:length(pCrp)){
+  pCrp[[c]][abs(pCrp[[c]])<mywrp[[c]]] <- 0
+  print(sum(pCrp[[c]][upper.tri(pCrp[[c]])]!=0))
+}
+}
+```
+
+
+```{r}
+load("/storage/group/qul12/default/elle/GitHub/Network-Analysis/real_dat/tc_may12_24/tc_may12_24_BIC.Rdata")
+CFGL_BIC; which(CFGL_BIC==min(CFGL_BIC)); l2_v[which(CFGL_BIC==min(CFGL_BIC))] # 
+CFGLr_BIC; which(CFGLr_BIC==min(CFGLr_BIC)) ; l2_v[which(CFGLr_BIC==min(CFGLr_BIC))] #
+CFGLrp_BIC; which(CFGLrp_BIC==min(CFGLrp_BIC)); l2_v[which(CFGLrp_BIC==min(CFGLrp_BIC))] #
+plot(unlist(l2_v),CFGL_BIC)
+plot(unlist(l2_v),CFGLr_BIC)
+plot(unlist(l2_v),CFGLrp_BIC)
+
+pC <- bic1[[1]]$CFGL_pcsm
+pCr <- bic1[[1]]$CFGLr_pcsm
+pCrp <- bic1[[1]]$CFGLrp_pcsm
+```
+
+
+```{r}
+library(scLink)
+library(NetworkToolbox)
+library(igraph)
+
+l2 = "sc"
+  load(paste0("/storage/group/qul12/default/elle/GitHub/Network-Analysis/real_dat/tc_may12_24/tc_may12_24_nets_", l2, ".Rdata"))
+
+p_sc <- list(scLink_net[[1]][[1]]$summary[[1]]$Sigma,scLink_net[[1]][[2]]$summary[[2]]$Sigma,scLink_net[[1]][[3]]$summary[[3]]$Sigma) ## TM
+
+deg <- function(A){
+  A[upper.tri(A)]  <- 0
+  diag(A) <- 0
+  return(colSums(A!=0))
+}
+theta2pcor = function(theta){
+  denom = sqrt(diag(theta))
+  pcor = sweep(theta, MARGIN = 1, denom, FUN = "/")
+  pcor = sweep(pcor, MARGIN = 2, denom, FUN = "/")
+  return(-pcor)
+}
+
+norm <-readRDS("/storage/group/qul12/default/elle/GitHub/Network-Analysis/real_dat/tc_may12_24/tc_may12_24_norm.rds")
+sc_deg <- lapply(p_sc, function(adj) deg(adj))
+C_deg <- lapply(pC, function(adj) deg(adj))
+Cr_deg <- lapply(pCr, function(adj) deg(adj))
+Crp_deg <- lapply(pCrp, function(adj) deg(adj))
+
+A_sc <- lapply(p_sc,function(p) abs(theta2pcor(p)))
+A_C <- lapply(pC,function(p) abs(theta2pcor(p)))
+A_Cr <- lapply(pCr,function(p) abs(theta2pcor(p)))
+A_Crp <- lapply(pCrp,function(p) abs(theta2pcor(p)))
+
+g_sc <- lapply(A_sc, function(a) graph_from_adjacency_matrix(a,weighted=TRUE,mode="undirected"))
+g_C <- lapply(A_C, function(a) graph_from_adjacency_matrix(a,weighted=TRUE,mode="undirected"))
+g_Cr <- lapply(A_Cr, function(a) graph_from_adjacency_matrix(a,weighted=TRUE,mode="undirected"))
+g_Crp <- lapply(A_Crp, function(a) graph_from_adjacency_matrix(a,weighted=TRUE,mode="undirected"))
+
+set.seed(1)
+L_sc <- lapply(g_sc, function(a) cluster_louvain(a))
+L_C <- lapply(g_C, function(a) cluster_louvain(a))
+L_Cr <- lapply(g_Cr, function(a) cluster_louvain(a))
+L_Crp <- lapply(g_Crp, function(a) cluster_louvain(a))
+
+
+deg_df <- rbind(data.frame(Degree=sc_deg[[1]],Method="scLink",Cond=1, gene=colnames(norm[[1]])),
+                    data.frame(Degree=sc_deg[[2]],Method="scLink",Cond=2, gene=colnames(norm[[1]])),
+                    data.frame(Degree=sc_deg[[3]],Method="scLink",Cond=3, gene=colnames(norm[[1]])),
+                    data.frame(Degree=C_deg[[1]],Method="CFGL",Cond=1, gene=colnames(norm[[1]])),
+                    data.frame(Degree=C_deg[[2]],Method="CFGL",Cond=2, gene=colnames(norm[[1]])),
+                    data.frame(Degree=C_deg[[3]],Method="CFGL",Cond=3, gene=colnames(norm[[1]])),
+                    data.frame(Degree=Cr_deg[[1]],Method="CFGL_r",Cond=1, gene=colnames(norm[[1]])),
+                    data.frame(Degree=Cr_deg[[2]],Method="CFGL_r",Cond=2, gene=colnames(norm[[1]])),
+                    data.frame(Degree=Cr_deg[[3]],Method="CFGL_r",Cond=3, gene=colnames(norm[[1]])),
+                    data.frame(Degree=Crp_deg[[1]],Method="CFGL_rp",Cond=1, gene=colnames(norm[[1]])),
+                    data.frame(Degree=Crp_deg[[2]],Method="CFGL_rp",Cond=2, gene=colnames(norm[[1]])),
+                    data.frame(Degree=Crp_deg[[3]],Method="CFGL_rp",Cond=3, gene=colnames(norm[[1]]))
+                    )
+
+deg_diff <- rbind(data.frame(Deg_Diff=sc_deg[[1]]-sc_deg[[2]],Method="scLink",Conds="1_2",gene=colnames(norm[[1]])),
+                  data.frame(Deg_Diff=sc_deg[[1]]-sc_deg[[3]],Method="scLink",Conds="1_3",gene=colnames(norm[[1]])),
+                  data.frame(Deg_Diff=sc_deg[[2]]-sc_deg[[3]],Method="scLink",Conds="2_3",gene=colnames(norm[[1]])),
+                  data.frame(Deg_Diff=C_deg[[1]]-C_deg[[2]],Method="CFGL",Conds="1_2",gene=colnames(norm[[1]])),
+                  data.frame(Deg_Diff=C_deg[[1]]-C_deg[[3]],Method="CFGL",Conds="1_3",gene=colnames(norm[[1]])),
+                  data.frame(Deg_Diff=C_deg[[2]]-C_deg[[3]],Method="CFGL",Conds="2_3",gene=colnames(norm[[1]])),
+                  data.frame(Deg_Diff=Cr_deg[[1]]-Cr_deg[[2]],Method="CFGL_r",Conds="1_2",gene=colnames(norm[[1]])),
+                  data.frame(Deg_Diff=Cr_deg[[1]]-Cr_deg[[3]],Method="CFGL_r",Conds="1_3",gene=colnames(norm[[1]])),
+                  data.frame(Deg_Diff=Cr_deg[[2]]-Cr_deg[[3]],Method="CFGL_r",Conds="2_3",gene=colnames(norm[[1]])),
+                  data.frame(Deg_Diff=Crp_deg[[1]]-Crp_deg[[2]],Method="CFGL_rp",Conds="1_2",gene=colnames(norm[[1]])),
+                  data.frame(Deg_Diff=Crp_deg[[1]]-Crp_deg[[3]],Method="CFGL_rp",Conds="1_3",gene=colnames(norm[[1]])),
+                  data.frame(Deg_Diff=Crp_deg[[2]]-Crp_deg[[3]],Method="CFGL_rp",Conds="2_3",gene=colnames(norm[[1]]))
+                  )
+
+n_df <- rbind(data.frame(num_C=length(L_sc[[1]]),Method="scLink",Cond=1),
+                    data.frame(num_C=length(L_sc[[2]]),Method="scLink",Cond=2),
+                    data.frame(num_C=length(L_sc[[3]]),Method="scLink",Cond=3),
+                    data.frame(num_C=length(L_C[[1]]),Method="CFGL",Cond=1),
+                    data.frame(num_C=length(L_C[[2]]),Method="CFGL",Cond=2),
+                    data.frame(num_C=length(L_C[[3]]),Method="CFGL",Cond=3),
+                    data.frame(num_C=length(L_Cr[[1]]),Method="CFGL-r",Cond=1),
+                    data.frame(num_C=length(L_Cr[[2]]),Method="CFGL-r",Cond=2),
+                    data.frame(num_C=length(L_Cr[[3]]),Method="CFGL-r",Cond=3),
+                    data.frame(num_C=length(L_Crp[[1]]),Method="CFGL-rp",Cond=1),
+                    data.frame(num_C=length(L_Crp[[2]]),Method="CFGL-rp",Cond=2),
+                    data.frame(num_C=length(L_Crp[[3]]),Method="CFGL-rp",Cond=3)
+                    )
+
+sizes_df <- rbind(data.frame(sizes(L_sc[[1]]),Method="scLink",Cond=1),
+                    data.frame(sizes(L_sc[[2]]),Method="scLink",Cond=2),
+                    data.frame(sizes(L_sc[[3]]),Method="scLink",Cond=3),
+                    data.frame(sizes(L_C[[1]]),Method="CFGL",Cond=1),
+                    data.frame(sizes(L_C[[2]]),Method="CFGL",Cond=2),
+                    data.frame(sizes(L_C[[3]]),Method="CFGL",Cond=3),
+                    data.frame(sizes(L_Cr[[1]]),Method="CFGL-r",Cond=1),
+                    data.frame(sizes(L_Cr[[2]]),Method="CFGL-r",Cond=2),
+                    data.frame(sizes(L_Cr[[3]]),Method="CFGL-r",Cond=3),
+                    data.frame(sizes(L_Crp[[1]]),Method="CFGL-rp",Cond=1),
+                    data.frame(sizes(L_Crp[[2]]),Method="CFGL-rp",Cond=2),
+                    data.frame(sizes(L_Crp[[3]]),Method="CFGL-rp",Cond=3)
+                    )
+
+print(lapply(p_sc, function(t) sum(t[upper.tri(t)]!=0)))
+t=p_sc
+t1=t[[1]][upper.tri(t[[1]])]
+t2=t[[2]][upper.tri(t[[2]])]
+t3=t[[3]][upper.tri(t[[3]])]
+print("cond-spec edges");print(sum(t1!=0 & t2==0 & t3==0));print(sum(t1==0 & t2!=0 & t3==0));print(sum(t1==0 & t2==0 & t3!=0))
+print("all shared"); print(sum(t1!=0 & t2!=0 & t3!=0))
+print("1-2 shared"); print(sum(t1!=0 & t2!=0 & t3==0))
+print("1-3 shared"); print(sum(t1!=0 & t3!=0 & t2==0))
+print("3-2 shared"); print(sum(t3!=0 & t2!=0 & t1==0))
+temp_sc <- data.frame(method="scLink", 
+               #  percent=100*c(sum(t1!=0 & t2==0 & t3==0), sum(t1==0 & t2!=0 & t3==0), sum(t1==0 & t2==0 & t3!=0), sum(t1!=0 & t2!=0 & t3==0), sum(t1!=0 & t3!=0 & t2==0), sum(t3!=0 & t2!=0 & t1==0), sum(t1!=0 & t2!=0 & t3!=0))/(sum(t1!=0 & t2==0 & t3==0) + sum(t1==0 & t2!=0 & t3==0) + sum(t1==0 & t2==0 & t3!=0) + sum(t1!=0 & t2!=0 & t3==0) + sum(t1!=0 & t3!=0 & t2==0) + sum(t3!=0 & t2!=0 & t1==0)+ sum(t1!=0 & t2!=0 & t3!=0)), 
+                 num=c(sum(t1!=0 & t2==0 & t3==0), sum(t1==0 & t2!=0 & t3==0), sum(t1==0 & t2==0 & t3!=0), sum(t1!=0 & t2!=0 & t3==0), sum(t1!=0 & t3!=0 & t2==0), sum(t3!=0 & t2!=0 & t1==0), sum(t1!=0 & t2!=0 & t3!=0)), 
+                 edge_type =c("C1","C2","C3","C12","C13","C23","C123"),lda2=1)
+rm(t,t1,t2,t3)
+
+print(lapply(pC, function(t) sum(t[upper.tri(t)]!=0)))
+t=pC
+t1=t[[1]][upper.tri(t[[1]])]
+t2=t[[2]][upper.tri(t[[2]])]
+t3=t[[3]][upper.tri(t[[3]])]
+print("cond-spec edges");print(sum(t1!=0 & t2==0 & t3==0));print(sum(t1==0 & t2!=0 & t3==0));print(sum(t1==0 & t2==0 & t3!=0))
+print("all shared"); print(sum(t1!=0 & t2!=0 & t3!=0))
+print("1-2 shared"); print(sum(t1!=0 & t2!=0 & t3==0))
+print("1-3 shared"); print(sum(t1!=0 & t3!=0 & t2==0))
+print("3-2 shared"); print(sum(t3!=0 & t2!=0 & t1==0))
+tempC <- data.frame(method="CFGL", 
+                  #  percent=100*c(sum(t1!=0 & t2==0 & t3==0), sum(t1==0 & t2!=0 & t3==0), sum(t1==0 & t2==0 & t3!=0), sum(t1!=0 & t2!=0 & t3==0), sum(t1!=0 & t3!=0 & t2==0), sum(t3!=0 & t2!=0 & t1==0), sum(t1!=0 & t2!=0 & t3!=0))/(sum(t1!=0 & t2==0 & t3==0) + sum(t1==0 & t2!=0 & t3==0) + sum(t1==0 & t2==0 & t3!=0) + sum(t1!=0 & t2!=0 & t3==0) + sum(t1!=0 & t3!=0 & t2==0) + sum(t3!=0 & t2!=0 & t1==0)+ sum(t1!=0 & t2!=0 & t3!=0)), 
+                 num=c(sum(t1!=0 & t2==0 & t3==0), sum(t1==0 & t2!=0 & t3==0), sum(t1==0 & t2==0 & t3!=0), sum(t1!=0 & t2!=0 & t3==0), sum(t1!=0 & t3!=0 & t2==0), sum(t3!=0 & t2!=0 & t1==0), sum(t1!=0 & t2!=0 & t3!=0)), 
+                 edge_type =c("C1","C2","C3","C12","C13","C23","C123"),lda2=1)
+rm(t,t1,t2,t3)
+
+print(lapply(pCr, function(t) sum(t[upper.tri(t)]!=0)))
+t=pCr
+t1=t[[1]][upper.tri(t[[1]])]
+t2=t[[2]][upper.tri(t[[2]])]
+t3=t[[3]][upper.tri(t[[3]])]
+print("cond-spec edges");print(sum(t1!=0 & t2==0 & t3==0));print(sum(t1==0 & t2!=0 & t3==0));print(sum(t1==0 & t2==0 & t3!=0))
+print("all shared"); print(sum(t1!=0 & t2!=0 & t3!=0))
+print("1-2 shared"); print(sum(t1!=0 & t2!=0 & t3==0))
+print("1-3 shared"); print(sum(t1!=0 & t3!=0 & t2==0))
+print("3-2 shared"); print(sum(t3!=0 & t2!=0 & t1==0))
+tempCr <- data.frame(method="CFGL-r", 
+                    #  percent=100*c(sum(t1!=0 & t2==0 & t3==0), sum(t1==0 & t2!=0 & t3==0), sum(t1==0 & t2==0 & t3!=0), sum(t1!=0 & t2!=0 & t3==0), sum(t1!=0 & t3!=0 & t2==0), sum(t3!=0 & t2!=0 & t1==0), sum(t1!=0 & t2!=0 & t3!=0))/(sum(t1!=0 & t2==0 & t3==0) + sum(t1==0 & t2!=0 & t3==0) + sum(t1==0 & t2==0 & t3!=0) + sum(t1!=0 & t2!=0 & t3==0) + sum(t1!=0 & t3!=0 & t2==0) + sum(t3!=0 & t2!=0 & t1==0)+ sum(t1!=0 & t2!=0 & t3!=0)), 
+                 num=c(sum(t1!=0 & t2==0 & t3==0), sum(t1==0 & t2!=0 & t3==0), sum(t1==0 & t2==0 & t3!=0), sum(t1!=0 & t2!=0 & t3==0), sum(t1!=0 & t3!=0 & t2==0), sum(t3!=0 & t2!=0 & t1==0), sum(t1!=0 & t2!=0 & t3!=0)), 
+             edge_type =c("C1","C2","C3","C12","C13","C23","C123"),lda2=1)
+rm(t,t1,t2,t3)
+
+print(lapply(pCrp, function(t) sum(t[upper.tri(t)]!=0)))
+t=pCrp
+t1=t[[1]][upper.tri(t[[1]])]
+t2=t[[2]][upper.tri(t[[2]])]
+t3=t[[3]][upper.tri(t[[3]])]
+print("cond-spec edges");print(sum(t1!=0 & t2==0 & t3==0));print(sum(t1==0 & t2!=0 & t3==0));print(sum(t1==0 & t2==0 & t3!=0))
+print("all shared"); print(sum(t1!=0 & t2!=0 & t3!=0))
+print("1-2 shared"); print(sum(t1!=0 & t2!=0 & t3==0))
+print("1-3 shared"); print(sum(t1!=0 & t3!=0 & t2==0))
+print("3-2 shared"); print(sum(t3!=0 & t2!=0 & t1==0))
+tempCrp <- data.frame(method="CFGL-rp", 
+                    #  percent=100*c(sum(t1!=0 & t2==0 & t3==0), sum(t1==0 & t2!=0 & t3==0), sum(t1==0 & t2==0 & t3!=0), sum(t1!=0 & t2!=0 & t3==0), sum(t1!=0 & t3!=0 & t2==0), sum(t3!=0 & t2!=0 & t1==0), sum(t1!=0 & t2!=0 & t3!=0))/(sum(t1!=0 & t2==0 & t3==0) + sum(t1==0 & t2!=0 & t3==0) + sum(t1==0 & t2==0 & t3!=0) + sum(t1!=0 & t2!=0 & t3==0) + sum(t1!=0 & t3!=0 & t2==0) + sum(t3!=0 & t2!=0 & t1==0)+ sum(t1!=0 & t2!=0 & t3!=0)), 
+                 num=c(sum(t1!=0 & t2==0 & t3==0), sum(t1==0 & t2!=0 & t3==0), sum(t1==0 & t2==0 & t3!=0), sum(t1!=0 & t2!=0 & t3==0), sum(t1!=0 & t3!=0 & t2==0), sum(t3!=0 & t2!=0 & t1==0), sum(t1!=0 & t2!=0 & t3!=0)), 
+             edge_type =c("C1","C2","C3","C12","C13","C23","C123"),lda2=1)
+rm(t,t1,t2,t3)
+
+edge_df <- rbind(temp_sc, tempC, tempCr, tempCrp)
+
+edge_df
+```
+```{r,eval=FALSE}
+range(deg_df$Degree[deg_df$Method=="scLink"&deg_df$Cond==1&deg_df$Degree!=0]) # 1-168 (trunc, sym, n10, d0.5)
+## same no trunc, no sym, n10, d0.5
+## 1-139 no trunc, no sym, n10, d0.9
+## 1-129 n20 d0.9
+## 1-146 n20 d0.5
+mean(deg_df$Degree[deg_df$Method=="scLink"&deg_df$Cond==1&deg_df$Degree!=0]) # 6.08 (trunc, sym, n10, d0.5)
+## same no trunc, no sym, n10, d0.5
+## 5.66 No trunc, no sym, n10, d0.9
+## 5.61 n20 d0.9
+## 5.76 n20 d0.5
+n_df$num_C[n_df$Method=="scLink"&n_df$Cond==1] # 567 (trunc, sym, n10, d0.5)
+## same no trunc, no sym, n10, d0.5
+## 569 no trunc, no sym, n10, d0.9
+## 576 n20 d0.9
+## 580 n20 d0.5
+mean(sizes_df$Freq[sizes_df$Method=="scLink"&sizes_df$Cond==1]) # 1.76 (trunc, sym, n10, d0.5)
+## same no trunc, no sym, n10, d0.5
+## 1.75 no trunc, no sym, n10, d0.9
+## 1.73 n20 d0.9
+## 1.72 n20 d0.5
+range(deg_df$Degree[deg_df$Method=="scLink"&deg_df$Cond==3&deg_df$Degree!=0]) # 1-82 (trunc, sym, n10, d0.5)
+## same no trunc, no sym, n10, d0.5
+## 1-78 no trunc, no sym, n10, d0.9
+## 1-78 n20 d0.9
+## 1-82 n20 d0.5
+mean(deg_df$Degree[deg_df$Method=="scLink"&deg_df$Cond==3&deg_df$Degree!=0]) # 7.38 (trunc, sym, n10, d0.5)
+## same no trunc, no sym, n10, d0.5
+## 7.21 no trunc, no sym, n10, d0.9
+## 7.21 n20 d0.9
+## 7.38 n20 d0.5
+n_df$num_C[n_df$Method=="scLink"&n_df$Cond==3] # 482 (trunc, sym, n10, d0.5)
+## same no trunc, no sym, n10, d0.5
+## 483 no trunc, no sym, n10, d0.9
+## 485 n20 d0.9
+## 485 n20 d0.5
+mean(sizes_df$Freq[sizes_df$Method=="scLink"&sizes_df$Cond==3]) # 2.07 (trunc, sym, n10, d0.5)
+## same no trunc, no sym, n10, d0.5
+## 2.07 no trunc, no sym, n10, d0.9
+## 2.06 n20 d0.9
+## 2.06 n20 d0.5
+```
+
+
+```{r,eval=FALSE}
+library(ggplot2)
+pdf("/storage/group/qul12/default/elle/GitHub/Network-Analysis/real_dat/tc_may12_24/tc_may12_24_deg_L.pdf")
+edge_df$edge_type <- factor(edge_df$edge_type, levels=c('C1', 'C2', 'C3', 'C12', 'C13', 'C23', 'C123'))
+ggplot(data=edge_df,aes(x=method,y=num,fill=edge_type)) + geom_bar(stat="identity") +
+   scale_fill_manual(values=c("tomato","khaki1","skyblue","darkorange","mediumpurple1","lightgreen","darkgray")) +
+  labs(fill="Edge Type", main="",y="Number of Total Edges",x="Method",title="C1 - 0h, C2 - 12h, C3 - 96h") 
+ggplot(data=edge_df,aes(x=method,y=num,fill=edge_type)) + geom_col(position="fill") +
+ scale_fill_manual(values=c("tomato","khaki1","skyblue","darkorange","mediumpurple1","lightgreen","darkgray")) +
+  labs(fill="Edge Type", main="",y="Percent of Total Edges",x="Method",title="C1 - 0h, C2 - 12h, C3 - 96h") 
+
+ggplot(data=deg_df,aes(x=Method,y=Degree,fill=as.factor(Cond))) + geom_boxplot() +
+    scale_fill_manual(values=c("tomato","khaki1","skyblue")) +
+  labs(fill="Condition", main="",y="Node Degrees",x="Method",title="Node Degrees by Method and Condition")
+ggplot(data=n_df,aes(x=Method,y=num_C,fill=as.factor(Cond))) + geom_bar(stat="identity",position="dodge") +
+    scale_fill_manual(values=c("tomato","khaki1","skyblue")) +
+  labs(fill="Condition", main="",y="Number of Communities",x="Method",title="Number of Communities by Method and Condition")
+ggplot(data=sizes_df,aes(x=Method,y=Freq,fill=as.factor(Cond))) + geom_boxplot() +
+    scale_fill_manual(values=c("tomato","khaki1","skyblue")) +
+  labs(fill="Condition", main="",y="Sizes of Communities",x="Method",title="Sizes of Communities by Method and Condition")
+dev.off() 
+```
+
+```{r,eval=FALSE}
+#library(directlabels)
+#library(lattice)
+library(ggplot2); library(ggrepel); library(gridExtra)
+for (m in c("scLink","CFGL", "CFGL_r","CFGL_rp")){
+  for (c in c("1_2","1_3","2_3")){
+    print(m);print(c)
+    if (c=="1_2"){c1=1;c2=2;n1="0h";n2="72h"} else if (c=="1_3"){c1=1;c2=3;n1="0h";n2="96h"} else if (c=="2_3"){c1=2;c2=3;n1="72h";n2="96h"}
+    sub_dd <- deg_diff[deg_diff$Method==m&deg_diff$Conds==c,]
+    sub25_dd <- sub_dd[(abs(sub_dd$Deg_Diff)>25),]
+    sub25_d1 <- deg_df[deg_df$Method==m & deg_df$Cond==c1&deg_df$gene %in% sub25_dd$gene,]
+    sub25_d2 <- deg_df[deg_df$Method==m & deg_df$Cond==c2&deg_df$gene %in% sub25_dd$gene,]
+    sub_df <- data.frame(C1=sub25_d1$Degree,C2=sub25_d2$Degree,gene=sub25_dd$gene,Degree_Change=ifelse(abs(sub25_dd$Deg_Diff)>50,"> 50",NA)) 
+    assign(paste0(m,c),ggplot(sub_df,aes(x=C1,y=C2,label=gene)) + geom_point() + geom_text_repel(aes(C1, C2, label = gene, color=Degree_Change), data = sub_df[abs(sub25_dd$Deg_Diff)>50,],max.overlaps = Inf, force=3)+ labs(x=n1,y=n2) + coord_cartesian(xlim=c(0,175),ylim=c(0,175))
+           )
+    # plot(sub25_d1$Degree, sub25_d2$Degree, pch=16,cex=1)
+  #  if (max(abs(sub_dd$Deg_Diff))>=100){
+  #  text(sub25_d1$Degree[abs(sub25_dd$Deg_Diff)>100], sub25_d2$Degree[abs(sub25_dd$Deg_Diff)>100]-1, labels=sub25_d1$gene[abs(sub25_dd$Deg_Diff)>100])
+  # hist(sub$Deg_Diff,main=paste0(m, ", C", c, ", ", nrow(sub25), " > 25"))
+   # }
+  }
+}
+pdf("/storage/group/qul12/default/elle/GitHub/Network-Analysis/real_dat/tc_may12_24/tc_may12_24_deg_change.pdf")
+grid.arrange(scLink1_2 + theme(legend.position = "none") + labs(title="scLink 1-2"),CFGL_rp1_2 + theme(legend.position = "none") + labs(title="CFGL-rp 1-2"), CFGL1_2 + theme(legend.position="none") + labs (title="CFGL 1-2"), CFGL_r1_2 + theme(legend.position = "none") + labs(title="CFGL-r 1-2"),nrow=2,ncol=2)
+grid.arrange(scLink1_3 + theme(legend.position = "none") + labs(title="scLink 1-3"),CFGL_rp1_3 + theme(legend.position = "none") + labs(title="CFGL-rp 1-3"),CFGL1_3 + theme(legend.position="none") + labs (title="CFGL 1-3"), CFGL_r1_3 + theme(legend.position = "none") + labs(title="CFGL-r 1-3"),nrow=2,ncol=2)
+grid.arrange(scLink2_3 + theme(legend.position = "none") + labs(title="scLink 2-3"),CFGL_rp2_3 + theme(legend.position = "none") + labs(title="CFGL-rp 2-3"),CFGL2_3 + theme(legend.position="none") + labs (title="CFGL 2-3"), CFGL_r2_3 + theme(legend.position = "none") + labs(title="CFGL-r 2-3"),nrow=2,ncol=2)
+
+scLink1_2 + labs(title="scLink 1-2")
+scLink1_3 + labs(title="scLink 1-3")
+scLink2_3 + labs(title="scLink 2-3")
+CFGL1_2 + labs (title="CFGL 1-2")
+CFGL1_3 + labs (title="CFGL 1-3")
+CFGL2_3 + labs (title="CFGL 2-3")
+CFGL_r1_2+ labs(title="CFGL-r 1-2")
+CFGL_r1_3+ labs(title="CFGL-r 1-3")
+CFGL_r2_3+ labs(title="CFGL-r 2-3")
+CFGL_rp1_2+ labs(title="CFGL-rp 1-2")
+CFGL_rp1_3+ labs(title="CFGL-rp 1-3")
+CFGL_rp2_3+ labs(title="CFGL-rp 2-3")
+dev.off()
+```
+
+
+```{r,eval=FALSE}
+library(clusterProfiler)
+library(org.Hs.eg.db)
+sc_go_pos <- list()
+Cr_go_pos <- list()
+Crp_go_pos <- list()
+sc_go_neg <- list()
+Cr_go_neg <- list()
+Crp_go_neg <- list()
+go_df <- data.frame()
+for (m in c("scLink","CFGL_r","CFGL_rp")){
+  for (c in c("1_2","1_3","2_3")){
+    print(m);print(c)
+    if (c=="1_2"){c1=1;c2=2;n1="0h";n2="12h"} else if (c=="1_3"){c1=1;c2=3;n1="0h";n2="96h"} else if (c=="2_3"){c1=2;c2=3;n1="12h";n2="96h"}
+    sub25_dd <- deg_diff[deg_diff$Method==m&deg_diff$Conds==c&(abs(deg_diff$Deg_Diff)>25),]
+    gene_symbols_pos = sub25_dd[sub25_dd$Deg_Diff>0,]$gene
+    gene_symbols_neg = sub25_dd[sub25_dd$Deg_Diff<0,]$gene
+    gene_symbols_pos[which(gene_symbols_pos=="March7")] <- "MARCHF7"
+    gene_symbols_pos[which(gene_symbols_pos=="LEPREL1")] <- "P3H2"
+    gene_symbols_pos[which(gene_symbols_pos=="TDGF1")] <- "CRIPTO"
+    gene_symbols_pos[which(gene_symbols_pos=="MT-CO1")] <- "COX1"
+    
+    gene_symbols_neg[which(gene_symbols_neg=="March7")] <- "MARCHF7"
+    gene_symbols_neg[which(gene_symbols_neg=="LEPREL1")] <- "P3H2"
+    gene_symbols_neg[which(gene_symbols_neg=="TDGF1")] <- "CRIPTO"
+    gene_symbols_neg[which(gene_symbols_neg=="MT-CO1")] <- "COX1"
+'
+      #  print(gene_symbols_pos)
+    valid_genes_pos <- bitr(gene_symbols_pos, fromType = "SYMBOL", toType = "ENTREZID", OrgDb = org.Hs.eg.db)
+    valid_genes_neg <- bitr(gene_symbols_neg, fromType = "SYMBOL", toType = "ENTREZID", OrgDb = org.Hs.eg.db)
+
+# Check if any genes were successfully mapped
+if (nrow(valid_genes_pos) == 0) {
+    print("No valid gene symbols found (pos). Please check your input.")
+} else{
+      # Identify failed mappings
+failed_pos <- gene_symbols_pos[!gene_symbols_pos%in%valid_genes_pos[,1]]
+
+# Print failed mappings
+print(failed_pos)
+}
+    
+    
+  #  print(gene_symbols_neg)
+    if (nrow(valid_genes_neg) == 0) {
+    print("No valid gene symbols found (neg). Please check your input.")
+    } else {
+          # Identify failed mappings
+failed_neg <- gene_symbols_neg[!gene_symbols_neg%in%valid_genes_neg[,1]]
+
+# Print failed mappings
+print(failed_neg)
+    }
+    '
+# Perform GO enrichment analysis
+ego_pos <- enrichGO(gene         = gene_symbols_pos,
+                OrgDb        = org.Hs.eg.db, # human
+                keyType      = 'SYMBOL',
+                ont          = "BP", # biological process
+                readable      = TRUE,
+                universe = unique(deg_df$gene))
+
+ego_neg <- enrichGO(gene         = gene_symbols_neg,
+                OrgDb        = org.Hs.eg.db, # human
+                keyType      = 'SYMBOL',
+                ont          = "BP", # biological process
+                readable      = TRUE,
+                 universe = unique(deg_df$gene))
+#print(head(ego_pos));print(head(ego_neg))
+#if (nrow(as.data.frame(ego_pos))>0){
+#go_df <- rbind(go_df, cbind(as.data.frame(ego_pos)[,c(2,5,6)],method=m,enriched=n1,compared=n2))
+#}
+#if (nrow(as.data.frame(ego_neg))>0){
+#go_df <- rbind(go_df, cbind(as.data.frame(ego_neg)[,c(2,5,6)],method=m,enriched=n2,compared=n1))
+#}
+if (m=="scLink"){
+sc_go_pos[[length(sc_go_pos)+1]] <- ego_pos
+sc_go_neg[[length(sc_go_neg)+1]] <- ego_neg
+}
+else if (m=="CFGL_r"){
+  Cr_go_pos[[length(Cr_go_pos)+1]] <- ego_pos
+Cr_go_neg[[length(Cr_go_neg)+1]] <- ego_neg
+}
+else if (m=="CFGL_rp"){
+  Crp_go_pos[[length(Crp_go_pos)+1]] <- ego_pos
+Crp_go_neg[[length(Crp_go_neg)+1]] <- ego_neg
+}
+  }
+}
+
+#go_df[go_df$method=="scLink"&go_df$enriched=="0h"&go_df$compared=="96h",]
+#go_df[go_df$method=="scLink"&go_df$enriched=="96h"&go_df$compared=="0h",]
+```
+
+
+```{r,eval=FALSE}
+unlist(lapply(sc_go_pos,function(f) nrow(as.data.frame(f)))) # nothing / nothing
+unlist(lapply(sc_go_neg,function(f) nrow(as.data.frame(f)))) # 9, 71, 32 / nothing
+unlist(lapply(Cr_go_pos,function(f) nrow(as.data.frame(f)))) # 0, 35, 27 / 0, 40, 8
+unlist(lapply(Cr_go_neg,function(f) nrow(as.data.frame(f)))) # 0, 74, 56 / 0, 10, 23
+unlist(lapply(Crp_go_pos,function(f) nrow(as.data.frame(f)))) # 2, 1, 2 / nothing
+unlist(lapply(Crp_go_neg,function(f) nrow(as.data.frame(f)))) # 0, 27, 32 / 0 0 1
+```
+
+```{r,eval=FALSE}
+library(xtable)
+
+sc_12_0 <- cbind(as.data.frame(gofilter(sc_go_neg[[1]],level=5)),method="scLink",enriched="12h",compared="0h")
+rownames(sc_12_0) <- NULL
+print(xtable(sc_12_0[,c(2,5,6)]))
+
+sc_96_0 <- cbind(as.data.frame(gofilter(sc_go_neg[[2]],level=4)),method="scLink",enriched="96h",compared="0h")
+rownames(sc_96_0) <- NULL
+print(xtable(sc_96_0[,c(2,5,6)]))
+
+sc_96_12 <- cbind(as.data.frame(gofilter(sc_go_neg[[3]],level=4)),method="scLink",enriched="96h",compared="12h")
+rownames(sc_96_12) <- NULL
+print(xtable(sc_96_12[,c(2,5,6)]))
+
+Cr_0_96 <- cbind(as.data.frame(gofilter(Cr_go_pos[[2]],level=4)),method="CFGL-r",enriched="0h",compared="96h")
+rownames(Cr_0_96) <- NULL
+print(xtable(Cr_0_96[,c(2,5,6)]))
+
+Cr_12_96 <- cbind(as.data.frame(gofilter(Cr_go_pos[[3]],level=4)),method="CFGL-r",enriched="12h",compared="96h")
+rownames(Cr_12_96) <- NULL
+print(xtable(Cr_12_96[,c(2,5,6)]))
+
+Cr_96_0 <- cbind(as.data.frame(gofilter(Cr_go_neg[[2]],level=4)),method="CFGL-r",enriched="96h",compared="0h")
+rownames(Cr_96_0) <- NULL
+print(xtable(Cr_96_0[,c(2,5,6)]))
+
+Cr_96_12 <- cbind(as.data.frame(gofilter(Cr_go_neg[[3]],level=4)),method="CFGL-r",enriched="96h",compared="12h")
+rownames(Cr_96_12) <- NULL
+print(xtable(Cr_96_12[,c(2,5,6)]))
+
+Crp_0_12 <- cbind(as.data.frame(Crp_go_pos[[1]]),method="CFGL-rp",enriched="0h",compared="12h")
+rownames(Crp_0_12) <- NULL
+print(xtable(Crp_0_12[,c(2,5,6)]))
+
+Crp_0_96 <- cbind(as.data.frame(Crp_go_pos[[2]]),method="CFGL-rp",enriched="0h",compared="96h")
+rownames(Crp_0_96) <- NULL
+print(xtable(Crp_0_96[,c(2,5,6)]))
+
+Crp_12_96 <- cbind(as.data.frame(Crp_go_pos[[3]]),method="CFGL-rp",enriched="12h",compared="96h")
+rownames(Crp_12_96) <- NULL
+print(xtable(Crp_12_96[,c(2,5,6)]))
+
+Crp_96_0 <- cbind(as.data.frame(gofilter(Crp_go_neg[[2]],level=4)),method="CFGL-rp",enriched="96h",compared="0h")
+rownames(Crp_96_0) <- NULL
+print(xtable(Crp_96_0[,c(2,5,6)]))
+
+Crp_96_12 <- cbind(as.data.frame(gofilter(Crp_go_neg[[3]],level=4)),method="CFGL-rp",enriched="96h",compared="12h")
+rownames(Crp_96_12) <- NULL
+print(xtable(Crp_96_12[,c(2,5,6)]))
+
+
+# organize - first look at this, then compare across methods for each comparison
+
+```
+
+
+FOR METASCAPE:
+
+```{r}
+    background <- rownames(p_sc[[1]])
+    for (i in 1:length(pCr)){
+      rownames(pC[[i]]) <- background
+      colnames(pC[[i]]) <- background
+       rownames(pCr[[i]]) <- background
+      colnames(pCr[[i]]) <- background
+      rownames(pCrp[[i]]) <- background
+      colnames(pCrp[[i]]) <- background
+    }
+    
+for (m in c("scLink","CFGL","CFGL_r","CFGL_rp")){
+  for (c in c("1_2","1_3","2_3")){
+    
+    if (c=="1_2"){c1=1;c2=2;n1="0h";n2="12h"} else if (c=="1_3"){c1=1;c2=3;n1="0h";n2="96h"} else if (c=="2_3"){c1=2;c2=3;n1="12h";n2="96h"}
+    sub_dd <- deg_diff[deg_diff$Method==m&deg_diff$Conds==c&(abs(deg_diff$Deg_Diff)>75),]
+  if (nrow(sub_dd)>0){
+    
+  for (gene in sub_dd$gene){
+if (m=="scLink"){
+  temp <- p_sc[[c1]][gene,]
+  con_a <- names(temp[temp!=0])
+  con_a <- con_a[con_a!=gene]
+  tempb <- p_sc[[c2]][gene,]
+  con_b <- names(tempb[tempb!=0])
+  con_b <- con_b[con_b!=gene]
+ 
+}
+else if (m=="CFGL"){
+ temp <- pC[[c1]][gene,]
+  con_a <- names(temp[temp!=0])
+  con_a <- con_a[con_a!=gene]
+  tempb <- pC[[c2]][gene,]
+  con_b <- names(tempb[tempb!=0])
+  con_b <- con_b[con_b!=gene]
+  print(c(m,c,gene))
+}
+else if (m=="CFGL_r"){
+ temp <- pCr[[c1]][gene,]
+  con_a <- names(temp[temp!=0])
+  con_a <- con_a[con_a!=gene]
+  tempb <- pCr[[c2]][gene,]
+  con_b <- names(tempb[tempb!=0])
+  con_b <- con_b[con_b!=gene]
+  print(c(m,c,gene))
+ 
+}
+else if (m=="CFGL_rp"){
+  temp <- pCrp[[c1]][gene,]
+  con_a <- names(temp[temp!=0])
+  con_a <- con_a[con_a!=gene]
+  tempb <- pCrp[[c2]][gene,]
+  con_b <- names(tempb[tempb!=0])
+  con_b <- con_b[con_b!=gene]
+  print(c(m,c,gene))
+
+}
+print(paste0(m,c,"_",n1, "_", gene))
+# Use capture.output to capture the output of cat()
+output <- capture.output(cat(con_a, sep = ","))
+# Convert the captured output to a single character string
+result <- paste(output, collapse = " ")
+# Print the modified result without quotes
+cat(result, "\n")
+
+  print(paste0(m,c,"_",n2, "_", gene))
+# Use capture.output to capture the output of cat()
+output2 <- capture.output(cat(con_b, sep = ","))
+# Convert the captured output to a single character string
+result2 <- paste(output2, collapse = " ")
+# Print the modified result without quotes
+cat(result2, "\n")
+  }
+  }
+  }
+}
+```
+
+```{r}
+# for genes with higher degrees at one condition or another
+    background <- rownames(p_sc[[1]])
+    for (i in 1:length(pCr)){
+      rownames(pC[[i]]) <- background
+      colnames(pC[[i]]) <- background
+       rownames(pCr[[i]]) <- background
+      colnames(pCr[[i]]) <- background
+      rownames(pCrp[[i]]) <- background
+      colnames(pCrp[[i]]) <- background
+    }
+     for (c in c("1_2","1_3","2_3")){ 
+for (m in c("scLink","CFGL","CFGL_r","CFGL_rp")){
+    if (c=="1_2"){c1=1;c2=2;n1="0h";n2="72h"} else if (c=="1_3"){c1=1;c2=3;n1="0h";n2="96h"} else if (c=="2_3"){c1=2;c2=3;n1="72h";n2="96h"}
+    sub25_dd <- deg_diff[deg_diff$Method==m&deg_diff$Conds==c&(abs(deg_diff$Deg_Diff)>25),]
+    gene_symbols_pos = sub25_dd[sub25_dd$Deg_Diff>0,]$gene
+    gene_symbols_neg = sub25_dd[sub25_dd$Deg_Diff<0,]$gene
+
+print(paste0(m,c,"_",n1))
+# Use capture.output to capture the output of cat()
+output <- capture.output(cat(gene_symbols_pos, sep = ","))
+# Convert the captured output to a single character string
+result <- paste(output, collapse = " ")
+# Print the modified result without quotes
+cat(result, "\n")
+
+  print(paste0(m,c,"_",n2))
+# Use capture.output to capture the output of cat()
+output2 <- capture.output(cat(gene_symbols_neg, sep = ","))
+# Convert the captured output to a single character string
+result2 <- paste(output2, collapse = " ")
+# Print the modified result without quotes
+cat(result2, "\n")
+  }
+  }
+```
+
+```{r}
+cat(background,sep=",")
+print("")
+```
+
+

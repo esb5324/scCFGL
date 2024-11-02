@@ -1,0 +1,114 @@
+---
+title: "Untitled"
+output: html_document
+date: "2024-04-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+temp <- read.csv("../data/time_course.csv",header=TRUE)
+names <- temp[,1]
+TC <- temp[,-1]
+rownames(TC) <- names
+TC <- t(TC)
+```
+
+```{r}
+count=TC
+count = count[, colSums(count) > 0]
+genes = colnames(count)
+genes = strsplit(genes, split = "-")
+genes = sapply(genes, function(x) x[1])
+count = count[, genes != "ERCC"]
+cs = rowSums(count)
+scale.factor = 1e6
+rcnt = sweep(count, 1, scale.factor/cs, FUN = "*")
+
+### filter by genes -------------------------------------------
+filter_genes_median = function(x, topn = 1500, frac_thre = 0.1){
+  frac = colMeans(x > 0)
+  x[x == 0] = NA
+  mu = apply(x, 2, median, na.rm = TRUE)
+  genes = colnames(x)
+  mu = mu[frac > frac_thre]
+  genes = genes[frac > frac_thre]
+  ord = order(mu, decreasing = TRUE)[1:topn]
+  return(genes[ord])
+}
+keep.genes = filter_genes_median(rcnt, topn = 1000, frac_thre = 0.1)
+rcnt = rcnt[, keep.genes]
+rcnt = log10(rcnt + 1)
+```
+
+
+```{r}
+TC0 <- rcnt[1:92,]
+TC12 <- rcnt[93:194,]
+TC24 <- rcnt[195:260,]
+TC48 <- rcnt[261:432,]
+TC72 <- rcnt[433:570,]
+TC96 <- rcnt[571:758,]
+```
+
+
+```{r}
+sum(TC0==0)/(nrow(TC0)*ncol(TC0))
+sum(TC12==0)/(nrow(TC72)*ncol(TC72))
+sum(TC96==0)/(nrow(TC96)*ncol(TC96))
+range(apply(TC0,2, function(c) sum(c==0)/length(c)))
+range(apply(TC72,2, function(c) sum(c==0)/length(c)))
+range(apply(TC96,2, function(c) sum(c==0)/length(c)))
+```
+
+```{r}
+norm <- list()
+norm[[1]] <- TC0
+norm[[2]] <- TC72
+norm[[3]] <- TC96
+
+const_cols <- c()
+for (condit in 1:length(norm)){
+  zero_cols <- sum(apply(norm[[condit]], 2, function(c) length(unique(c))==1))
+  if (zero_cols > 0){
+    print(paste0("condition:", condit))
+    print(paste0("number of constant columns: ", zero_cols))
+    const_cols <- c(const_cols, which(apply(norm[[condit]], 2, function(c) length(unique(c))==1)))
+  }
+}
+
+const_cols <- unique(const_cols)
+print(length(const_cols))
+if (length(const_cols) > 0){
+  print("REMOVING CONSTANT COLUMNS IN ALL CONDITIONS")
+ norm <- lapply(norm, function(m) m[,-(const_cols)])
+}
+
+norm <- list()
+norm[[1]] <- TC0
+norm[[2]] <- TC12
+norm[[3]] <- TC96
+
+const_cols <- c()
+for (condit in 1:length(norm)){
+  zero_cols <- sum(apply(norm[[condit]], 2, function(c) length(unique(c))==1))
+  if (zero_cols > 0){
+    print(paste0("condition:", condit))
+    print(paste0("number of constant columns: ", zero_cols))
+    const_cols <- c(const_cols, which(apply(norm[[condit]], 2, function(c) length(unique(c))==1)))
+  }
+}
+
+const_cols <- unique(const_cols)
+print(length(const_cols))
+if (length(const_cols) > 0){
+  print("REMOVING CONSTANT COLUMNS IN ALL CONDITIONS")
+  norm <- lapply(norm, function(m) m[,-(const_cols)])
+}
+
+saveRDS(norm, "../data/tc_norm.rds")
+```
+
+

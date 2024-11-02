@@ -1,0 +1,26 @@
+{
+    "id": "4D5C2818",
+    "path": "~/scCFGL/scripts/functions_simulation_analysis.R",
+    "project_path": "scripts/functions_simulation_analysis.R",
+    "type": "r_source",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1730496461684.0,
+    "source_on_save": false,
+    "relative_order": 7,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "13,19",
+        "scrollLine": "0"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1730505160,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1730505160536,
+    "read_only": false,
+    "read_only_alternatives": []
+}

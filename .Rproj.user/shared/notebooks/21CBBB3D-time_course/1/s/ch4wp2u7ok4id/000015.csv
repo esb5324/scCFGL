@@ -1,0 +1,5 @@
+"0","temp <- read.csv(""../data/time_course.csv"",header=TRUE)"
+"0","names <- temp[,1]"
+"0","TC <- temp[,-1]"
+"0","rownames(TC) <- names"
+"0","TC <- t(TC)"
