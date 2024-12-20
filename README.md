@@ -1,18 +1,17 @@
-scCFGL
+# scCFGL
 
-Description:
+# Description
 scCFGL is a method designed to estimate gene coexpression networks from single-cell RNA-sequencing data. Building upon scLink and CFGL, the method is based on the Gaussian Graphical Model (GGM), where genes are represented as nodes, and their coexpression relationships are captured as edges in the estimated networks. This method is specifically tailored for single-cell gene expression data and can jointly estimate networks while accounting for heterogeneity across biological conditions. The resulting networks allow for meaningful comparisons of gene relationships across different biological states, enabling enhanced biological insights from single-cell genomics data.
 
-Installation:
+# Installation
 To install and use scCFGL, you need to have R installed along with the necessary dependencies.
 
-Install from GitHub:
 To install scCFGL from GitHub, run the following commands in your R console:
 
-# Install devtools if you don't have it already
+To install devtools if you don't have it already:
 install.packages("devtools")
 
-# Install scCFGL
+To install scCFGL:
 devtools::install_github("esb5324/scCFGL")
 
 Dependencies:
@@ -25,7 +24,6 @@ install.packages(c("matrixcalc", "glmnet", "parallel"))
 
 To load the package, use:
 
-# Load the package
 library(scCFGL)
 
 Refer to the package documentation and R scripts for more details on available functions, including the sccfgl() function.
